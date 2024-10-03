@@ -87,87 +87,59 @@ Object.keys(sequences).forEach(key => {
 
 //5) Você está em uma sala com três interruptores, cada um conectado a uma lâmpada em salas diferentes. Você não pode ver as lâmpadas da sala em que está, mas pode ligar e desligar os interruptores quantas vezes quiser. Seu objetivo é descobrir qual interruptor controla qual lâmpada. Como você faria para descobrir, usando apenas duas idas até uma das salas das lâmpadas, qual interruptor controla cada lâmpada?
 
-class Lampada {
-  constructor(nome) {
-    this.nome = nome;
-    this.estado = 'desligada';
-    this.tempoLigada = 0;
-  }
+// Estado inicial das lâmpadas (false = desligada, true = ligada)
+let lamps = [false, false, false]; // Cada índice representa uma lâmpada
 
-  ligar() {
-    this.estado = 'ligada';
-  }
-
-  desligar() {
-    this.estado = 'desligada';
-  }
-
-  passarTempo() {
-    if (this.estado === 'ligada') {
-      this.tempoLigada++;
-    }
-  }
-
-  verificar() {
-    if (this.estado === 'ligada') return 'ligada';
-    if (this.tempoLigada > 0) return 'quente';
-    return 'fria';
-  }
+// Função para ligar/desligar lâmpadas
+function switchLamp(lampIndex, state) {
+  lamps[lampIndex] = state;
 }
 
-class Enigma {
-  constructor() {
-    this.lampadas = [new Lampada('A'), new Lampada('B'), new Lampada('C')];
-    this.interruptores = ['1', '2', '3'];
-    this.visitas = 0;
+// Função para embaralhar um array (aleatoriedade)
+function shuffle(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
   }
-
-  acionarInterruptor(numero) {
-    const indice = parseInt(numero) - 1;
-    if (this.lampadas[indice].estado === 'ligada') {
-      this.lampadas[indice].desligar();
-      console.log(`Interruptor ${numero} desligado.`);
-    } else {
-      this.lampadas[indice].ligar();
-      console.log(`Interruptor ${numero} ligado.`);
-    }
-  }
-
-  passarTempo() {
-    this.lampadas.forEach(lampada => lampada.passarTempo());
-    console.log('Algum tempo se passou...');
-  }
-
-  visitarSala(sala) {
-    if (this.visitas >= 2) {
-      console.log('Você já visitou a sala duas vezes. O enigma terminou.');
-      return;
-    }
-    this.visitas++;
-    console.log(`Visita ${this.visitas} à sala ${sala}:`);
-    console.log(
-      `Lâmpada ${this.lampadas[sala - 1].nome}: ${this.lampadas[
-        sala - 1
-      ].verificar()}`
-    );
-  }
-
-  terminarEnigma() {
-    console.log('Resolver o enigma:');
-    this.lampadas.forEach((lampada, index) => {
-      console.log(
-        `Lâmpada ${lampada.nome} corresponde ao interruptor ${this.interruptores[index]}.`
-      );
-    });
-  }
+  return array;
 }
 
-const enigma = new Enigma();
+// Estratégia para descobrir qual interruptor controla qual lâmpada
+function findLampsSwitch() {
+  let associations = {}; // Armazena as associações entre interruptores e lâmpadas
 
-enigma.acionarInterruptor('1');
-enigma.passarTempo();
-enigma.acionarInterruptor('1');
-enigma.acionarInterruptor('2');
-enigma.visitarSala(1);
-enigma.visitarSala(2);
-enigma.terminarEnigma();
+  // Embaralha a ordem dos interruptores e das lâmpadas para aleatoriedade
+  let switches = shuffle(['Interruptor 1', 'Interruptor 2', 'Interruptor 3']);
+  let rooms = shuffle(['Sala A', 'Sala B', 'Sala C']);
+
+  console.log('Ordem aleatória dos interruptores:', switches);
+  console.log('Ordem aleatória das salas:', rooms);
+
+  // Passo 1: Ligue o Interruptor 1 e o Interruptor 2 temporariamente
+  switchLamp(0, true); // Interruptor 1 ligado (deixa ligado)
+
+  // Primeira ida a uma sala (exemplo: vamos à primeira sala aleatória)
+  if (lamps[rooms.indexOf('Sala A')]) {
+    associations['Sala A'] = switches[0]; // Se a lâmpada está acesa, é controlada pelo Interruptor 1
+  } else {
+    // Se está apagada, é controlada pelo Interruptor 2 ou 3
+    associations['Sala A'] = switches[1] + ' ou ' + switches[2];
+  }
+
+  // Segunda ida: agora vamos para a próxima sala aleatória
+  if (lamps[rooms.indexOf('Sala B')]) {
+    associations['Sala B'] = switches[0]; // Se a lâmpada está acesa, é controlada pelo Interruptor 1
+  } else {
+    // Se está apagada, é controlada pelo Interruptor 2 ou 3
+    associations['Sala B'] = switches[1] + ' ou ' + switches[2];
+  }
+
+  // A última sala é a que resta, e associamos corretamente
+  associations['Sala C'] = switches[2]; // Se foi eliminada, sabemos que é o Interruptor 3
+
+  return associations; // Retorna a associação final
+}
+
+// Execução do código
+let resultado = findLampsSwitch();
+console.log('Associações entre salas e interruptores:', resultado);
